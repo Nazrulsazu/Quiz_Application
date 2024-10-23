@@ -1,0 +1,56 @@
+﻿@model Quiz_App.ViewModels.HomeViewModel
+
+<h1>Welcome to Quiz App</h1>
+
+<!-- Latest Templates Gallery -->
+<h2>Latest Templates</h2>
+<div class="row">
+    @foreach (var template in Model.LatestTemplates)
+    {
+        <div class="col-md-4">
+            <div class="card">
+                <img src="@(!string.IsNullOrEmpty(template.ImageUrl) ? template.ImageUrl : "/images/default.png")" alt="@template.Title" class="card-img-top" />
+                <div class="card-body">
+                    <h5 class="card-title">@template.Title</h5>
+                    <p class="card-text">@template.Description</p>
+                    <p class="card-text">
+                        <small class="text-muted">Author: @(template.Author?.UserName ?? "Unknown")</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Popular Templates Table -->
+<h2>Top 5 Most Popular Templates</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Number of Filled Forms</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var template in Model.PopularTemplates)
+        {
+            <tr>
+                <td>@template.Title</td>
+                <td>@(template.Author?.UserName ?? "Unknown")</td>
+                <td>@template.FilledForms?.Count </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Tag Cloud -->
+<h2>Tag Cloud</h2>
+<div>
+    @foreach (var tag in Model.TagCloud)
+    {
+        <a href="@Url.Action("SearchByTag", "Quiz", new { tag = tag.Tag })" style="font-size:@(10 + tag.Count * 2)px;">
+            @tag.Tag
+        </a>
+    }
+</div>

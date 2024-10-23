@@ -1,0 +1,31 @@
+﻿@model Quiz_App.ViewModels.TemplateFormViewModel
+
+<h2>Submitted Answers for @Model.Template.Title</h2>
+
+@foreach (var question in Model.Template.Questions.OrderBy(q => q.Order))
+{
+    <div class="form-group">
+        <label><strong>@question.Title</strong></label><br />
+        <p>@question.Description</p>
+
+        @if (question.Type == Quiz_App.Models.QuestionType.Checkbox)
+        {
+            <ul>
+                @foreach (var answer in Model.Answers.Where(a => a.QuestionId == question.Id))
+                {
+                    <li>@answer.AnswerValue</li>
+                }
+            </ul>
+        }
+        else
+        {
+            var answer = Model.Answers.FirstOrDefault(a => a.QuestionId == question.Id);
+            if (answer != null)
+            {
+                <p>@answer.AnswerValue</p>
+            }
+        }
+    </div>
+}
+
+<a href="@Url.Action("ShowQuestions", new { id = Model.Template.Id })" class="btn btn-primary">Go Back</a>

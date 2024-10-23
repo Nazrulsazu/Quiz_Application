@@ -1,0 +1,49 @@
+﻿@model IEnumerable<Quiz_App.Models.ApplicationUser>
+
+@{
+    ViewBag.Title = "User Management";
+}
+
+<h2>User Management</h2>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Blocked</th>
+            <th>Admin</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Email</td>
+                <td>@(user.IsBlocked ? "Yes" : "No")</td>
+                <td>@(user.IsAdmin ? "Yes" : "No")</td>
+                <td>
+                    <!-- Block/Unblock User -->
+                    @if (!user.IsBlocked)
+                    {
+                        <a class="btn btn-warning" asp-action="BlockUser" asp-route-userId="@user.Id">Block</a>
+                    }
+                    else
+                    {
+                        <a class="btn btn-success" asp-action="UnblockUser" asp-route-userId="@user.Id">Unblock</a>
+                    }
+
+                    <!-- Promote/Demote Admin -->
+                    @if (!user.IsAdmin)
+                    {
+                        <a class="btn btn-primary" asp-action="PromoteToAdmin" asp-route-userId="@user.Id">Promote to Admin</a>
+                    }
+                    else
+                    {
+                        <a class="btn btn-danger" asp-action="RemoveAdminAccess" asp-route-userId="@user.Id">Remove Admin Access</a>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

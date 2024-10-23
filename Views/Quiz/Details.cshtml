@@ -1,0 +1,166 @@
+﻿@model Quiz_App.Models.Template
+@{
+    ViewData["Title"] = "Template Details";
+}
+
+<h2>@Model.Title</h2>
+
+<div>
+    <h3>Add Questions</h3>
+    <button type="button" class="btn btn-primary" onclick="addSingleLine()">Add Single Line Question</button>
+    <button type="button" class="btn btn-primary" onclick="addMultiLine()">Add Multi Line Question</button>
+    <button type="button" class="btn btn-primary" onclick="addPositiveInteger()">Add Positive Integer Question</button>
+    <button type="button" class="btn btn-primary" onclick="addCheckbox()">Add Checkbox Question</button>
+</div>
+
+<form asp-action="AddQuestions" method="post">
+    <input type="hidden" name="templateId" value="@Model.Id" />
+
+    <div id="question-container" class="mt-3">
+        <h4>Questions (drag to reorder)</h4>
+
+        <ul id="sortable-questions" class="list-group">
+            @{
+                var orderedQuestions = Model.Questions.OrderBy(q => q.Order).ToList();
+               
+            }
+             
+            @for (int i = 0; i < orderedQuestions.Count; i++)
+            {
+                var question = orderedQuestions[i];
+                var optionsList = question.Options.ToList(); // Convert to List
+
+                <li class="list-group-item question-item">
+                    <input type="hidden" name="questions[@i].Id" value="@question.Id" />
+                    <input type="hidden" name="questions[@i].IsDeleted" value="false" class="is-deleted-field" />
+
+                    <div class="d-flex justify-content-between">
+                        <input type="text" name="questions[@i].Title" value="@question.Title" class="form-control" placeholder="Title" />
+                        <button type="button" class="btn btn-danger btn-sm ml-2" onclick="deleteQuestion(this)">Delete</button>
+                    </div>
+
+                    <textarea name="questions[@i].Description" class="form-control mt-2" placeholder="Description">@question.Description</textarea>
+                    <input type="hidden" name="questions[@i].Type" value="@question.Type" />
+                    <input type="hidden" name="questions[@i].Order" value="@i" class="order-field" />
+
+                    <div class="form-check mt-2">
+                        <input type="hidden" name="questions[@i].ShowInResults" value="false" />
+                        <input type="checkbox" name="questions[@i].ShowInResults" class="form-check-input" value="true" @(question.ShowInResults ? "checked" : "") />
+                        <label class="form-check-label">Show in Results</label>
+                    </div>
+
+                    @if (question.Type == Quiz_App.Models.QuestionType.Checkbox)
+                    {
+                        <div id="checkbox-options-container-@i" class="mt-2">
+                            <h5>Options</h5>
+                            @if (!optionsList.Any())
+                            {
+                                <p>No options available.</p>
+                            }
+                            else
+                            {
+                                @for (int j = 0; j < optionsList.Count; j++)
+                                {
+                                    <input type="hidden" name="questions[@i].Options[@j].Id" value="@optionsList[j].Id" />
+                                    <input type="text" name="questions[@i].Options[@j].Value" value="@optionsList[j].Value" class="form-control mt-2 checkbox-option-input" placeholder="Option" />
+                                }
+                                <button type="button" class="btn btn-secondary mt-2" onclick="addCheckboxOption(@i)">Add Option</button>
+                            }
+                        </div>
+                    }
+                </li>
+            }
+        </ul>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">Save Questions</button>
+</form>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+
+    <script>
+        var sortable = new Sortable(document.getElementById('sortable-questions'), {
+            animation: 150,
+            onEnd: updateOrder
+        });
+
+        var questionCounter = @Model.Questions.Count();
+
+        function addSingleLine() {
+            addQuestion("Single Line Question", "SingleLineText");
+        }
+
+        function addMultiLine() {
+            addQuestion("Multi Line Question", "MultiLineText");
+        }
+
+        function addPositiveInteger() {
+            addQuestion("Positive Integer Question", "PositiveInteger");
+        }
+
+        function addCheckbox() {
+            addQuestion("Checkbox Question", "Checkbox");
+        }
+
+        function addQuestion(title, type) {
+            var newQuestion = `
+                        <li class="list-group-item question-item">
+                            <input type="hidden" name="questions[${questionCounter}].Id" value="0" />
+                            <input type="hidden" name="questions[${questionCounter}].IsDeleted" value="false" class="is-deleted-field" />
+                            <div class="d-flex justify-content-between">
+                                <input type="text" name="questions[${questionCounter}].Title" value="${title}" class="form-control" placeholder="Title" />
+                                <button type="button" class="btn btn-danger btn-sm ml-2" onclick="deleteQuestion(this)">Delete</button>
+                            </div>
+                            <textarea name="questions[${questionCounter}].Description" class="form-control mt-2" placeholder="Description"></textarea>
+                            <input type="hidden" name="questions[${questionCounter}].Type" value="${type}" />
+                            <input type="hidden" name="questions[${questionCounter}].Order" value="${questionCounter}" class="order-field" />
+                            <input type="hidden" name="questions[${questionCounter}].ShowInResults" value="false" />
+                            <input type="checkbox" name="questions[${questionCounter}].ShowInResults" class="form-check-input" value="true" /> Show in Results
+                    `;
+
+            if (type === "Checkbox") {
+                newQuestion += `
+                            <div id="checkbox-options-container-${questionCounter}">
+                                <input type="hidden" name="questions[${questionCounter}].Options[0].Id" value="0" />
+                                <input type="text" name="questions[${questionCounter}].Options[0].Value" class="form-control mt-2 checkbox-option-input" placeholder="Option 1" />
+                                <button type="button" class="btn btn-secondary mt-2" onclick="addCheckboxOption(${questionCounter})">Add Option</button>
+                            </div>`;
+            }
+
+            newQuestion += `</li>`;
+            document.getElementById('sortable-questions').insertAdjacentHTML('beforeend', newQuestion);
+            questionCounter++;
+        }
+
+        function addCheckboxOption(questionIndex) {
+            var container = document.getElementById(`checkbox-options-container-${questionIndex}`);
+            var optionIndex = container.querySelectorAll('input[type="text"]').length;
+            if (optionIndex < 4) {
+                var newOption = `
+                            <div>
+                                <input type="hidden" name="questions[${questionIndex}].Options[${optionIndex}].Id" value="0" />
+                                <input type="text" name="questions[${questionIndex}].Options[${optionIndex}].Value" class="form-control mt-2 checkbox-option-input" placeholder="Option ${optionIndex + 1}" />
+                            </div>`;
+                container.insertAdjacentHTML('beforeend', newOption);
+            }
+        }
+
+        function deleteQuestion(button) {
+            var questionItem = button.closest('.question-item');
+            questionItem.querySelector('.is-deleted-field').value = "true";
+            questionItem.style.display = "none";
+        }
+
+        document.querySelector('form').addEventListener('submit', function () {
+            updateOrder();
+        });
+
+        function updateOrder() {
+            var questions = document.querySelectorAll('#sortable-questions li');
+            questions.forEach((question, index) => {
+                question.querySelector('.order-field').value = index;
+            });
+        }
+    </script>
+}

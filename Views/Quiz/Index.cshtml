@@ -1,0 +1,55 @@
+﻿@model IEnumerable<Quiz_App.Models.Template>
+
+<h1>Templates</h1>
+
+<a asp-action="Create" class="btn btn-primary">Create New Template</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Topic</th>
+            <th>Author</th>
+            <th>Public</th>
+            @if(User.Identity.IsAuthenticated)
+              {
+                  <th>Actions</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var template in Model)
+        {
+            <tr>
+                <!-- Leave the title as it is -->
+                <td>@template.Title</td>
+                <td>@template.Topic</td>
+                <td>@template.Author?.UserName</td>
+                <td>@(template.IsPublic ? "Yes" : "No")</td>
+
+                <td>
+                    <!-- Display "Form" button with the required functionality -->
+                    @if (User.Identity.IsAuthenticated && User.Identity.Name == template.Author?.UserName)
+                    {
+                        <!-- If the logged-in user is the creator, redirect to Details -->
+                        <a asp-action="Details" asp-route-id="@template.Id" class="btn btn-info">Form</a>
+                        <a asp-action="Show" asp-controller="Template" asp-route-id="@template.Id" class="btn btn-info">Template</a>
+
+                        <!-- Edit and delete options only for the creator of the template -->
+                        <a asp-action="Edit" asp-route-id="@template.Id" class="btn btn-warning">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@template.Id" class="btn btn-danger">Delete</a>
+                    }
+
+                    @if (User.Identity.IsAuthenticated && User.Identity.Name != template.Author?.UserName)
+                    {
+                        <!-- If the logged-in user is NOT the creator, redirect to ShowQuestions -->
+                        
+                        <a asp-action="Show" asp-controller="Template" asp-route-id="@template.Id" class="btn btn-info">Template</a>
+                    }
+
+      
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

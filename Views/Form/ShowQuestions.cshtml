@@ -1,0 +1,49 @@
+﻿@model Quiz_App.ViewModels.TemplateFormViewModel
+
+<h2>@Model.Template.Title</h2>
+
+<form asp-action="SubmitAnswers" method="post">
+    <input type="hidden" name="templateId" value="@Model.Template.Id" />
+
+    @for (int i = 0; i < Model.Template.Questions.Count; i++)
+    {
+        var question = Model.Template.Questions.OrderBy(q => q.Order).ElementAt(i);
+        var answer = Model.Answers.FirstOrDefault(a => a.QuestionId == question.Id);
+
+        <div class="form-group">
+            <label>@question.Title</label><br />
+            <label>@question.Description</label>
+
+            @if (question.Type == Quiz_App.Models.QuestionType.SingleLineText)
+            {
+                <input type="text" name="answers[@i].AnswerValue" class="form-control" value="@answer?.AnswerValue" />
+                <input type="hidden" name="answers[@i].QuestionId" value="@question.Id" />
+            }
+            else if (question.Type == Quiz_App.Models.QuestionType.MultiLineText)
+            {
+                <textarea name="answers[@i].AnswerValue" class="form-control">@answer?.AnswerValue</textarea>
+                <input type="hidden" name="answers[@i].QuestionId" value="@question.Id" />
+            }
+            else if (question.Type == Quiz_App.Models.QuestionType.PositiveInteger)
+            {
+                <input type="number" name="answers[@i].AnswerValue" class="form-control" value="@answer?.AnswerValue" min="0" />
+                <input type="hidden" name="answers[@i].QuestionId" value="@question.Id" />
+            }
+            else if (question.Type == Quiz_App.Models.QuestionType.Checkbox)
+            {
+                @foreach (var option in question.Options)
+                {
+                    var isChecked = Model.Answers.Any(a => a.QuestionId == question.Id && a.AnswerValue == option.Value);
+
+                    <div class="form-check">
+                        <input type="checkbox" name="answers[@i].AnswerValues" value="@option.Value" class="form-check-input" @(isChecked ? "checked" : "") />
+                        <label class="form-check-label">@option.Value</label>
+                    </div>
+                }
+                <input type="hidden" name="answers[@i].QuestionId" value="@question.Id" />
+            }
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>

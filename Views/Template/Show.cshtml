@@ -1,0 +1,58 @@
+﻿@using System.Security.Claims
+@model Template
+
+<h1>@Model.Title</h1>
+<p>@Model.Description</p>
+
+<h3>Likes</h3>
+<p>@(Model.Likes?.Count ?? 0) Likes</p>
+
+@if (User.Identity.IsAuthenticated)
+{
+    <form asp-action="LikeTemplate" method="post">
+        <input type="hidden" name="templateId" value="@Model.Id" />
+
+        @if (Model.Likes.Any(like => like.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier)))
+        {
+            <button type="submit" class="btn btn-danger">Dislike</button>
+        }
+        else
+        {
+            <button type="submit" class="btn btn-success">Like</button>
+        }
+    </form>
+}
+
+<h3>Comments</h3>
+@if (Model.Comments != null && Model.Comments.Any())
+{
+    <ul>
+        @foreach (var comment in Model.Comments)
+        {
+            <li>
+                <strong>@comment.Author?.UserName</strong> (@comment.CreatedDate.ToShortDateString()):
+                <p>@comment.Text</p>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>No comments yet.</p>
+}
+
+@if (User.Identity.IsAuthenticated && User.Identity.Name != Model.Author?.UserName)
+{
+    <h4>Leave a Comment:</h4>
+    <form asp-action="SubmitComment" method="post">
+        <input type="hidden" name="templateId" value="@Model.Id" />
+        <textarea name="text" class="form-control" rows="4" placeholder="Write your comment here..."></textarea>
+        <br />
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+    <a asp-action="Details" asp-controller="Quiz" asp-route-id="@Model.Id" class="btn btn-info">Form</a>
+}
+else
+{
+    <p><a href="/Identity/Account/Login">Login</a> to post a comment.</p>
+}
